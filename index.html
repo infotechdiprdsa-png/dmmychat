@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
+  <title>Our Private Chat</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #0b141a;
+      color: #e9edef;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Bar */
+    .header {
+      background: #202c33;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      user-select: none;
+    }
+
+    .title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #e9edef;
+    }
+
+    .status {
+      font-size: 0.72rem;
+      color: #22c55e;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .header-actions button {
+      background: none;
+      border: none;
+      color: #aebac1;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 6px;
+      margin-left: 4px;
+    }
+
+    /* Chat Messages Box */
+    .chat-box {
+      flex: 1;
+      padding: 16px 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: radial-gradient(circle at center, #111b21 0%, #0b141a 100%);
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 8px 14px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      position: relative;
+      word-wrap: break-word;
+      line-height: 1.4;
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-outgoing {
+      align-self: flex-end;
+      background: #005c4b;
+      color: #e9edef;
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg-incoming {
+      align-self: flex-start;
+      background: #202c33;
+      color: #e9edef;
+      border-bottom-left-radius: 2px;
+    }
+
+    .sender-tag {
+      font-size: 0.72rem;
+      color: #38bdf8;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .msg-time {
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    /* Bottom Input Bar */
+    .input-bar {
+      background: #202c33;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .input-bar input {
+      flex: 1;
+      background: #2a3942;
+      border: none;
+      outline: none;
+      padding: 12px 18px;
+      border-radius: 24px;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
+    .input-bar input::placeholder {
+      color: #8696a0;
+    }
+
+    .send-btn {
+      background: #00a884;
+      border: none;
+      outline: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 1.15rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s;
+    }
+
+    .send-btn:active {
+      transform: scale(0.9);
+    }
+
+    /* Settings Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal-content {
+      background: #202c33;
+      border-radius: 20px;
+      padding: 22px;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .modal-content h3 {
+      color: #00a884;
+      font-size: 1.2rem;
+    }
+
+    .modal-content label {
+      font-size: 0.85rem;
+      color: #8696a0;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .modal-content input, .modal-content select {
+      width: 100%;
+      padding: 10px 12px;
+      background: #111b21;
+      border: 1px solid #374151;
+      border-radius: 10px;
+      color: #fff;
+      outline: none;
+      font-size: 0.95rem;
+    }
+
+    .modal-content button {
+      background: #00a884;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="header">
+    <div class="header-info">
+      <div class="avatar" id="partnerAvatar">❤️</div>
+      <div>
+        <div class="title" id="partnerName">Private Chat</div>
+        <div class="status">End-to-End Encrypted</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button onclick="openSettings()" title="Settings">⚙️</button>
+      <button onclick="clearChat()" title="Clear Chat">🗑️</button>
+    </div>
+  </div>
+
+  <!-- Messages List -->
+  <div class="chat-box" id="chatBox"></div>
+
+  <!-- Bottom Message Input -->
+  <div class="input-bar">
+    <input type="text" id="msgInput" placeholder="सुरक्षित मैसेज लिखें..." autocomplete="off" onkeydown="if(event.key==='Enter') sendMessage()" />
+    <button class="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+
+  <!-- Profile & Key Settings Modal -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <h3>चैट सेटिंग्स</h3>
+      
+      <div>
+        <label>आप कौन हैं?</label>
+        <select id="userRole">
+          <option value="Dilkhush">दिलखुश (पति)</option>
+          <option value="Wife">वाइफ (पत्नी)</option>
+        </select>
+      </div>
+
+      <div>
+        <label>सीक्रेट सुरक्षा पासवर्ड (Secret Key):</label>
+        <input type="password" id="secretKey" placeholder="दोनों फोन में एक ही पासवर्ड रखें" />
+        <small style="color:#8696a0; font-size: 0.72rem; display: block; margin-top: 4px;">
+          यह पासवर्ड दोनों मोबाइल में बिल्कुल एक जैसा होना चाहिए।
+        </small>
+      </div>
+
+      <button onclick="saveSettings()">सेव करें</button>
+    </div>
+  </div>
+
+  <script>
+    // -------------------------------------------------------------
+    // 1. Firebase Realtime Database URL
+    // -------------------------------------------------------------
+    const FIREBASE_URL = "https://my-private-chat-dm-default-rtdb.firebaseio.com";
+
+    let currentUser = localStorage.getItem('chat_user') || 'Dilkhush';
+    let secretPass = localStorage.getItem('chat_secret') || 'MyLove123';
+    let lastRenderedCount = 0;
+
+    // First time setup prompt
+    if (!localStorage.getItem('chat_user')) {
+      document.getElementById('settingsModal').style.display = 'flex';
+    }
+
+    function openSettings() {
+      document.getElementById('userRole').value = currentUser;
+      document.getElementById('secretKey').value = secretPass;
+      document.getElementById('settingsModal').style.display = 'flex';
+    }
+
+    function saveSettings() {
+      currentUser = document.getElementById('userRole').value;
+      secretPass = document.getElementById('secretKey').value;
+      localStorage.setItem('chat_user', currentUser);
+      localStorage.setItem('chat_secret', secretPass);
+      cachedCryptoKey = null; // पासवर्ड बदलने पर की रिसेट करें
+      document.getElementById('settingsModal').style.display = 'none';
+      updateUI();
+      lastRenderedCount = 0;
+      fetchMessages();
+    }
+
+    function updateUI() {
+      const partner = currentUser === 'Dilkhush' ? 'मेरी जीवनसंगिनी ❤️' : 'मेरे जीवनसाथी ❤️';
+      document.getElementById('partnerName').innerText = partner;
+    }
+    updateUI();
+
+    // -------------------------------------------------------------
+    // 2. क्रिप्टोग्राफी: तेज़ AES-GCM (Key Caching के साथ)
+    // -------------------------------------------------------------
+    let cachedCryptoKey = null;
+    let cachedPassword = null;
+
+    async function getKey(password) {
+      if (cachedCryptoKey && cachedPassword === password) {
+        return cachedCryptoKey;
+      }
+      const enc = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+      );
+      cachedCryptoKey = await crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt: enc.encode("private_salt_dilkhush_fixed_salt"),
+          iterations: 100000,
+          hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+      cachedPassword = password;
+      return cachedCryptoKey;
+    }
+
+    async function encryptText(plainText) {
+      try {
+        const key = await getKey(secretPass);
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encoded = new TextEncoder().encode(plainText);
+        const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, encoded);
+
+        const combined = new Uint8Array(iv.length + cipher.byteLength);
+        combined.set(iv);
+        combined.set(new Uint8Array(cipher), iv.length);
+        
+        let binary = '';
+        for (let i = 0; i < combined.length; i++) {
+          binary += String.fromCharCode(combined[i]);
+        }
+        return btoa(binary);
+      } catch (err) {
+        console.error("Encryption error:", err);
+        return plainText;
+      }
+    }
+
+    async function decryptText(cipherB64) {
+      try {
+        const key = await getKey(secretPass);
+        const raw = atob(cipherB64);
+        const array = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) array[i] = raw.charCodeAt(i);
+
+        const iv = array.slice(0, 12);
+        const data = array.slice(12);
+        const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, data);
+        return new TextDecoder().decode(decrypted);
+      } catch (e) {
+        return "🔒 [गलत पासवर्ड या सुरक्षित संदेश]";
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 3. मैसेज भेजना और प्राप्त करना
+    // -------------------------------------------------------------
+    async function sendMessage() {
+      const input = document.getElementById('msgInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      const encryptedMsg = await encryptText(text);
+
+      const payload = {
+        sender: currentUser,
+        text: encryptedMsg,
+        timestamp: Date.now()
+      };
+
+      try {
+        await fetch(`${FIREBASE_URL}/messages.json`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        fetchMessages();
+      } catch (err) {
+        alert("मैसेज भेजने में समस्या आई। इंटरनेट कनेक्शन जांचें।");
+      }
+    }
+
+    async function fetchMessages() {
+      try {
+        const res = await fetch(`${FIREBASE_URL}/messages.json`);
+        const data = await res.json();
+        
+        if (!data) {
+          document.getElementById('chatBox').innerHTML = '';
+          lastRenderedCount = 0;
+          return;
+        }
+
+        const msgList = Object.values(data);
+        if (msgList.length === lastRenderedCount) return;
+        lastRenderedCount = msgList.length;
+
+        // समय के अनुसार सही क्रम में सजाएं
+        msgList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = '';
+
+        for (const item of msgList) {
+          const decrypted = await decryptText(item.text);
+          const isMe = item.sender === currentUser;
+          const time = new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+          const div = document.createElement('div');
+          div.className = `message ${isMe ? 'msg-outgoing' : 'msg-incoming'}`;
+          div.innerHTML = `
+            ${!isMe ? `<div class="sender-tag">${item.sender === 'Dilkhush' ? 'दिलखुश' : 'वाइफ'}</div>` : ''}
+            <div>${decrypted}</div>
+            <div class="msg-time">${time}</div>
+          `;
+          chatBox.appendChild(div);
+        }
+        
+        setTimeout(() => {
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }, 50);
+      } catch (e) {
+        console.error("Sync error:", e);
+      }
+    }
+
+    async function clearChat() {
+      if (confirm("क्या आप दोनों तरफ से पूरी चैट हमेशा के लिए मिटाना चाहते हैं?")) {
+        await fetch(`${FIREBASE_URL}/messages.json`, { method: 'DELETE' });
+        lastRenderedCount = 0;
+        document.getElementById('chatBox').innerHTML = '';
+      }
+    }
+
+    // हर 2 सेकंड में ऑटो-सिंक
+    setInterval(fetchMessages, 2000);
+    fetchMessages();
+  </script>
+</body>
+</html>
